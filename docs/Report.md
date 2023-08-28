@@ -8,7 +8,10 @@
 
 - Успешных: 14
 - Не прошли: 12
-  
+  ![image](https://github.com/AzizShoev/DiplomQa58/assets/125202162/e166f62f-5e9f-4487-94bf-d4db5f29a4cf)
+  ![image](https://github.com/AzizShoev/DiplomQa58/assets/125202162/f0310bfe-d1b8-42aa-ac32-9e56daf1889a)
+
+
 Представлен единый отчет по результатам тестов, так как результат не зависит от подключенной СУБД.
 
 По выявленным в системе дефекта были заведены Issues.
