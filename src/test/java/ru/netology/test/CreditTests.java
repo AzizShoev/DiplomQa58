@@ -158,4 +158,12 @@ public class CreditTests {
         page.checkNotificationApprovedVisible();
         assertEquals("APPROVED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
     }
+
+    @Test
+    @DisplayName("Купить в кредит. Оставить поля пустыми")
+    void shouldShowErrorsWithEmptyFields() {
+        StartPage page = StartPage.creditPayButtonClick();
+        page.continueButtonClick();
+        page.checkEmptyErrorHave();
+    }
 }

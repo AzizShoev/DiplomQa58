@@ -116,13 +116,11 @@ public class StartPage {
         yearField.$(".input__sub").shouldHave(Condition.exactText("Истёк срок действия карты"));
     }
 
-    public void checkOwnerErrorHave() { //ошибка поля имени
+    public void checkEmptyErrorHave() {   //пустые поля
+        cardNumberField.$(".input__sub").shouldHave(Condition.exactText("Поле обязательно для заполнения"));
+        monthField.$(".input__sub").shouldHave(Condition.exactText("Поле обязательно для заполнения"));
+        yearField.$(".input__sub").shouldHave(Condition.exactText("Поле обязательно для заполнения"));
         ownerField.$(".input__sub").shouldHave(Condition.exactText("Поле обязательно для заполнения"));
-    }
-
-    public void checkCvcErrorHave() {   //ошибка поля CVV
         cvcField.$(".input__sub").shouldHave(Condition.exactText("Поле обязательно для заполнения"));
-
     }
-
 }

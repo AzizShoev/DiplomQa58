@@ -150,7 +150,7 @@ public class CashTests {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/wrongCVV.csv")
-    @DisplayName("11. Купить. Оплата происходит после исправления CVC/CVV")
+    @DisplayName("10. Купить. Оплата происходит после исправления CVC/CVV")
     void shouldPayProcessWithCorrectedCvc(String cvv) {
         StartPage page = StartPage.payButtonClick();
         page.inputData(DataGenerator.getApprovedCard());
@@ -161,5 +161,13 @@ public class CashTests {
         page.continueButtonClick();
         page.checkNotificationApprovedVisible();
         assertEquals("APPROVED", SqlHelper.getOperationStatus(SqlHelper.getPayTable()));
+    }
+
+    @Test
+    @DisplayName("Купить. Оставить поля пустыми")
+    void shouldShowErrorsWithEmptyFields() {
+        StartPage page = StartPage.payButtonClick();
+        page.continueButtonClick();
+        page.checkEmptyErrorHave();
     }
 }
