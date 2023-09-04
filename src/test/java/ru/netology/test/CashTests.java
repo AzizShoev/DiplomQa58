@@ -5,8 +5,8 @@ import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
 
 import ru.netology.pages.StartPage;
-import ru.netology.testData.DataGenerator;
-import ru.netology.testData.SqlHelper;
+import ru.netology.testdata.DataGenerator;
+import ru.netology.testdata.SqlHelper;
 
 import static org.junit.jupiter.api.Assertions.*;
 

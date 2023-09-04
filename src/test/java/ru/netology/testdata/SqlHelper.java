@@ -1,4 +1,4 @@
-package ru.netology.testData;
+package ru.netology.testdata;
 
 import lombok.SneakyThrows;
 import org.apache.commons.dbutils.QueryRunner;

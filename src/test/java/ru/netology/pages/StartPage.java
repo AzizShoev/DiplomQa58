@@ -2,7 +2,7 @@ package ru.netology.pages;
 
 import com.codeborne.selenide.*;
 import org.openqa.selenium.By;
-import ru.netology.testData.Cards;
+import ru.netology.testdata.Cards;
 
 import java.time.Duration;
 
