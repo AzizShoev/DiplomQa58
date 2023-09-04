@@ -3,11 +3,12 @@ package ru.netology.test;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
+
 import ru.netology.pages.StartPage;
 import ru.netology.testdata.DataGenerator;
 import ru.netology.testdata.SqlHelper;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CreditTests {
     private final String subMessageWrongFormat = "Неверный формат";

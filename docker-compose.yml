@@ -28,7 +28,7 @@ services:
 
   node-app:
     build: ./artifacts/gate-simulator
-    image: node:alpine3.17
+    image: node-app:1.0
     container_name: node-qa58
     ports:
         - '9999:9999'

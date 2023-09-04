@@ -10,6 +10,7 @@ import ru.netology.testdata.SqlHelper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+
 public class CashTests {
     private final String subMessageWrongFormat = "Неверный формат";
     private final String subMessageWrongDate = "Неверно указан срок действия карты";
