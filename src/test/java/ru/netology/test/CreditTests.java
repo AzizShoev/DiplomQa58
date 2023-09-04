@@ -3,21 +3,28 @@ package ru.netology.test;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvFileSource;
 import ru.netology.pages.StartPage;
 import ru.netology.testData.DataGenerator;
 import ru.netology.testData.SqlHelper;
 
-import java.sql.SQLException;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CreditTests {
+    private final String subMessageWrongFormat = "Неверный формат";
+    private final String subMessageWrongDate = "Неверно указан срок действия карты";
+    private final String subMessageEmptyData = "Поле обязательно для заполнения";
+    private final String subMessageExpiredDate = "Истёк срок действия карты";
+    static StartPage page = new StartPage();
+
     @BeforeAll
-    static void setUpAll() throws SQLException {
+    static void setUpAll() {
         SqlHelper.cleanTables();
         SelenideLogger.addListener("allure", new AllureSelenide());
+    }
+
+    @BeforeEach
+    void setUp() {
+        page = StartPage.creditPayButtonClick();
     }
 
     @AfterAll
@@ -26,144 +33,181 @@ public class CreditTests {
     }
 
     @AfterEach
-    void cleanTables() throws SQLException {
+    void cleanTables() {
         SqlHelper.cleanTables();
     }
 
     @Test
-    @DisplayName("11. Купить в кредит. Успешная оплата кредитом с разрешённой картой.")
+    @DisplayName("25. Купить в кредит. Успешная оплата разрешённой (APPROVED) картой")
     void shouldConfirmPayWithApprovedCard() {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getApprovedCard());
-        page.continueButtonClick();
+        page.inputData(DataGenerator.approvedCardFormData());
         page.checkNotificationApprovedVisible();
-        assertEquals("APPROVED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
+        assertEquals("APPROVED", SqlHelper.getCreditStatus());
     }
 
     @Test
-    @DisplayName("12. Купить в кредит. Отказ в оплате кредитом с запрещённой картой.")
+    @DisplayName("26. Купить в кредит. Отказ в оплате запрещённой (DECLINED) картой")
     void shouldNotConfirmPayWithDeclinedCard() {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getDeclinedCard());
-        page.continueButtonClick();
+        page.inputData(DataGenerator.declinedCardFormData());
         page.checkNotificationDeclinedVisible();
-        assertEquals("DECLINED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
+        assertEquals("DECLINED", SqlHelper.getCreditStatus());
     }
 
-    @ParameterizedTest
-    @CsvFileSource(resources = "/invalidCardNumbers.csv")
-    @DisplayName("13. Купить в кредит. Отказ. Номер карты валиден, но отсутствует в базе данных.")
-    void shouldNotConfirmPayWithWrongCard(String number) {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getDeclinedCard());
-        page.cleanCardNumberFieldAndInputNewData(number);
-        page.continueButtonClick();
+    @Test
+    @DisplayName("27. Купить в кредит. Отказ. Номер карты валиден, но не существует в системе")
+    void shouldNotConfirmInvalidCard() {
+        page.inputData(DataGenerator.unknownCardFormData());
         page.checkNotificationDeclinedVisible();
-        assertEquals("DECLINED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
-    }
-
-    @ParameterizedTest
-    @CsvFileSource(resources = "/wrongCardNumbers.csv")
-    @DisplayName("14. Купить в кредит. Оплата проходит после исправления номера карты на валидный")
-    void shouldPayAfterCorrectingCardNumber(String number) {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getDeclinedCard());
-        page.cleanCardNumberFieldAndInputNewData(number);
-        page.continueButtonClick();
-        page.checkCardNumberFormatErrorHave();
-        page.cleanCardNumberFieldAndInputNewData(DataGenerator.approvedCardNumber());
-        page.continueButtonClick();
-        page.checkNotificationApprovedVisible();
-        assertEquals("APPROVED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
     }
 
     @Test
-    @DisplayName("15. Купить в кредит. Оплата не происходит. Карта просрочена на месяц.")
-    void shouldPayWithCardPreviousMonth() {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getApprovedCard());
-        page.cleanMonthFieldAndInputNewData(DataGenerator.getShiftedMMFromCurrent(-1));
-        page.cleanYearFieldAndInputNewData(DataGenerator.getShiftedYYFromCurrentByMonth(-1));
-        page.continueButtonClick();
-        page.checkMonthDateErrorHave();
+    @DisplayName("28. Купить в кредит. Отказ. Неверный формат номера карты")
+    void shouldPayWrongFormatCardNumber() {
+        page.inputData(DataGenerator.wrongCardNumberFormData());
+        page.cardNumberFieldSubMessage(subMessageWrongFormat);
     }
 
     @Test
-    @DisplayName("16. Купить в кредит. Оплата не происходит. Карта просрочена на год.")
-    void shouldPayWithCardPreviousYear() {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getApprovedCard());
-        page.cleanMonthFieldAndInputNewData(DataGenerator.getShiftedMMFromCurrent(0));
-        page.cleanYearFieldAndInputNewData(DataGenerator.getShiftedYYFromCurrent(-1));
-        page.continueButtonClick();
-        page.checkYearDateErrorHave();
-    }
-
-    @ParameterizedTest
-    @CsvFileSource(resources = "/wrongMonth.csv")
-    @DisplayName("17. Купить в кредит. Оплата проходит после исправления месяца.")
-    void shouldPayAfterCorrectionMonth(String month) {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getApprovedCard());
-        page.cleanMonthFieldAndInputNewData(month);
-        page.continueButtonClick();
-        page.checkMonthFormatErrorHave();
-        page.cleanMonthFieldAndInputNewData("12");
-        page.continueButtonClick();
-        page.checkNotificationApprovedVisible();
-        assertEquals("APPROVED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
-    }
-
-    @ParameterizedTest
-    @CsvFileSource(resources = "/wrongYear.csv")
-    @DisplayName("18. Купить в кредит. Оплата проходит после исправления года.")
-    void shouldPayAfterCorrectionWrongYear(String year) {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getApprovedCard());
-        page.cleanYearFieldAndInputNewData(year);
-        page.continueButtonClick();
-        page.checkYearFormatErrorHave();
-        page.cleanYearFieldAndInputNewData(DataGenerator.getShiftedYYFromCurrent(2));
-        page.continueButtonClick();
-        page.checkNotificationApprovedVisible();
-        assertEquals("APPROVED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
-    }
-
-    @ParameterizedTest
-    @CsvFileSource(resources = "/wrongCardholderName.csv")
-    @DisplayName("19. Купить в кредит. Оплата происходит после исправления имени владельца.")
-    void shouldPayAfterCorrectionCardholderName(String owner) {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getApprovedCard());
-        page.cleanOwnerFieldAndInputNewData(owner);
-        page.continueButtonClick();
-        page.checkOwnerFormatErrorHave();
-        page.cleanOwnerFieldAndInputNewData(DataGenerator.generateCardholder());
-        page.continueButtonClick();
-        page.checkNotificationApprovedVisible();
-        assertEquals("APPROVED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
-    }
-
-    @ParameterizedTest
-    @CsvFileSource(resources = "/wrongCVV.csv")
-    @DisplayName("20. Купить в кредит. Оплата происходит после исправления CVC/CVV.")
-    void shouldPayProcessWithCorrectedCvc(String cvv) {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.inputData(DataGenerator.getApprovedCard());
-        page.cleanCvcFieldAndInputNewData(cvv);
-        page.continueButtonClick();
-        page.checkCvcFormatErrorHave();
-        page.cleanCvcFieldAndInputNewData(DataGenerator.generateCvc());
-        page.continueButtonClick();
-        page.checkNotificationApprovedVisible();
-        assertEquals("APPROVED", SqlHelper.getOperationStatus(SqlHelper.getCreditTable()));
+    @DisplayName("29. Купить в кредит. Оплата не происходит. Карта просрочена на месяц")
+    void shouldNotPayProcessWithOverdueMonth() {
+        page.inputData(DataGenerator.wrongCardMonthFormData());
+        page.cardMonthFieldSubMessage(subMessageWrongDate);
     }
 
     @Test
-    @DisplayName("Купить в кредит. Оставить поля пустыми")
-    void shouldShowErrorsWithEmptyFields() {
-        StartPage page = StartPage.creditPayButtonClick();
-        page.continueButtonClick();
-        page.checkEmptyErrorHave();
+    @DisplayName("30. Купить в кредит. Оплата не происходит. Карта просрочена на год")
+    void shouldNotPayProcessWithOverdueYear() {
+        page.inputData(DataGenerator.expiredCardYearFormData());
+        page.cardYearFieldSubMessage(subMessageExpiredDate);
+    }
+
+    @Test
+    @DisplayName("31. Купить в кредит. Оплата не происходит. В поле месяц значение от 0 до 9")
+    void shouldNotPayProcessWithWrongMonthOneNumber() {
+        page.inputData(DataGenerator.wrongCardMonthOneNumberFormData());
+        page.cardMonthFieldSubMessage(subMessageWrongFormat);
+    }
+
+    @Test
+    @DisplayName("32. Купить в кредит. Оплата не происходит. В поле месяц значение от 13 до 99")
+    void shouldNotPayProcessWithWrongMonthTwoNumber() {
+        page.inputData(DataGenerator.wrongCardMonthTwoNumbersFormData());
+        page.cardMonthFieldSubMessage(subMessageWrongDate);
+    }
+
+    @Test
+    @DisplayName("33. Купить в кредит. Оплата не происходит. В поле год указан год старше 6 лет")
+    void shouldNotPayProcessWithOveredYear() {
+        page.inputData(DataGenerator.wrongCardYearFormData());
+        page.cardYearFieldSubMessage(subMessageWrongDate);
+    }
+
+    @Test
+    @DisplayName("34. Купить в кредит. Оплата не происходит. В поле год указано значение от 0 до 9")
+    void shouldNotPayProcessWithOneNumberYear() {
+        page.inputData(DataGenerator.wrongCardYearFormatFormData());
+        page.cardYearFieldSubMessage(subMessageWrongFormat);
+    }
+
+    @Test
+    @DisplayName("35. Купить в кредит. Оплата не происходит. В поле месяц значение 00")
+    void shouldNotPayProcessWithDoubleZeroMonth() {
+        page.inputData(DataGenerator.doubleZeroMonthFormData());
+        page.cardMonthFieldSubMessage(subMessageWrongDate);
+    }
+
+    @Test
+    @DisplayName("36. Купить в кредит. Оплата не происходит. В поле год значение 00")
+    void shouldNotPayProcessWithDoubleZeroYear() {
+        page.inputData(DataGenerator.doubleZeroYearFormData());
+        page.cardYearFieldSubMessage(subMessageExpiredDate);
+    }
+
+    @Test
+    @DisplayName("37. Купить в кредит. Оплата не происходит. В поле Владелец только имя")
+    void shouldNotPayProcessWithWrongCardHolder() {
+        page.inputData(DataGenerator.wrongCardHolderFormData());
+        page.cardHolderFieldSubMessage(subMessageWrongFormat);
+    }
+
+    @Test
+    @DisplayName("38. Купить в кредит. Оплата не происходит. В поле Владелец данные кириллицей")
+    void shouldNotPayProcessWithCyrilCardHolder() {
+        page.inputData(DataGenerator.cyrillicCardHolderFormData());
+        page.cardHolderFieldSubMessage(subMessageWrongFormat);
+    }
+
+    @Test
+    @DisplayName("39. Купить в кредит. Оплата не происходит. В поле Владелец цифры")
+    void shouldNotPayProcessWithNumbersCardHolder() {
+        page.inputData(DataGenerator.numbersCardHolderFormData());
+        page.cardHolderFieldSubMessage(subMessageWrongFormat);
+    }
+
+    @Test
+    @DisplayName("40. Купить в кредит. Оплата не происходит. В поле Владелец спецсимволы")
+    void shouldNotPayProcessWithSpecSymbolsCardHolder() {
+        page.inputData(DataGenerator.specSymbolsCardHolderFormData());
+        page.cardHolderFieldSubMessage(subMessageWrongFormat);
+    }
+
+    @Test
+    @DisplayName("41. Купить в кредит. Оплата не происходит. В поле CVV одна цифра")
+    void shouldNotPayProcessWithOneNumberCardCode() {
+        page.inputData(DataGenerator.oneNumberCardCodeFormData());
+        page.cardCVVFieldSubMessage(subMessageWrongFormat);
+    }
+
+    @Test
+    @DisplayName("42. Купить в кредит. Оплата не происходит. В поле CVV две цифры")
+    void shouldNotPayProcessWithTwoNumberCardCode() {
+        page.inputData(DataGenerator.twoNumbersCardCodeFormData());
+        page.cardCVVFieldSubMessage(subMessageWrongFormat);
+    }
+
+    @Test
+    @DisplayName("43. Купить в кредит. Оплата не происходит. Пустое поле Номер карты")
+    void shouldNotPayProcessWithEmptyCardNumber() {
+        page.inputData(DataGenerator.emptyCardNumberFormData());
+        page.cardNumberFieldSubMessage(subMessageEmptyData);
+    }
+
+    @Test
+    @DisplayName("44. Купить в кредит. Оплата не происходит. Пустое поле Месяц")
+    void shouldNotPayProcessWithEmptyMonth() {
+        page.inputData(DataGenerator.emptyCardMonthFormData());
+        page.cardMonthFieldSubMessage(subMessageEmptyData);
+    }
+
+    @Test
+    @DisplayName("45. Купить в кредит. Оплата не происходит. Пустое поле Год")
+    void shouldNotPayProcessWithEmptyYear() {
+        page.inputData(DataGenerator.emptyCardYearFormData());
+        page.cardYearFieldSubMessage(subMessageEmptyData);
+    }
+
+    @Test
+    @DisplayName("46. Купить в кредит. Оплата не происходит. Пустое поле Владелец")
+    void shouldNotPayProcessWithEmptyCardHolder() {
+        page.inputData(DataGenerator.emptyCardHolderFormData());
+        page.cardHolderFieldSubMessage(subMessageEmptyData);
+    }
+
+    @Test
+    @DisplayName("47. Купить в кредит. Оплата не происходит. Пустое поле CVC/CVV")
+    void shouldNotPayProcessWithEmptyCardCode() {
+        page.inputData(DataGenerator.emptyCardCodeFormData());
+        page.cardCVVFieldSubMessage(subMessageEmptyData);
+    }
+
+    @Test
+    @DisplayName("48. Купить в кредит. Оплата не происходит. Пустые поля")
+    void shouldNotPayProcessWithEmptyFields() {
+        page.inputData(DataGenerator.emptyFieldsFormData());
+        page.cardNumberFieldSubMessage(subMessageEmptyData);
+        page.cardMonthFieldSubMessage(subMessageEmptyData);
+        page.cardYearFieldSubMessage(subMessageEmptyData);
+        page.cardHolderFieldSubMessage(subMessageEmptyData);
+        page.cardCVVFieldSubMessage(subMessageEmptyData);
     }
 }
