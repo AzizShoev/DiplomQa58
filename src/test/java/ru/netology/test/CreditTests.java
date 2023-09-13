@@ -15,7 +15,7 @@ public class CreditTests {
     private final String subMessageWrongDate = "Неверно указан срок действия карты";
     private final String subMessageEmptyData = "Поле обязательно для заполнения";
     private final String subMessageExpiredDate = "Истёк срок действия карты";
-    static StartPage page = new StartPage();
+    static StartPage page;
 
     @BeforeAll
     static void setUpAll() {
@@ -25,7 +25,8 @@ public class CreditTests {
 
     @BeforeEach
     void setUp() {
-        page = StartPage.creditPayButtonClick();
+        page = new StartPage();
+        page.creditPayButtonClick();
     }
 
     @AfterAll

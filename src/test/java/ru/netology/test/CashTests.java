@@ -16,7 +16,7 @@ public class CashTests {
     private final String subMessageWrongDate = "Неверно указан срок действия карты";
     private final String subMessageEmptyData = "Поле обязательно для заполнения";
     private final String subMessageExpiredDate = "Истёк срок действия карты";
-    static StartPage page = new StartPage();
+    static StartPage page;
 
     @BeforeAll
     static void setUpAll() {
@@ -26,7 +26,8 @@ public class CashTests {
 
     @BeforeEach
     void setUp() {
-        page = StartPage.payButtonClick();
+        page = new StartPage();
+        page.payButtonClick();
     }
 
     @AfterAll
@@ -37,7 +38,6 @@ public class CashTests {
     @AfterEach
     void cleanTables() {
         SqlHelper.cleanTables();
-
     }
 
     @Test

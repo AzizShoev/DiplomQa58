@@ -40,16 +40,12 @@ public class StartPage {
         continueButton.click();
     }
 
-    public static StartPage payButtonClick() {  //купить
-        StartPage payPage = page(StartPage.class);
-        payPage.payButton.click();
-        return payPage;
+    public void payButtonClick() {  //купить
+        payButton.click();
     }
 
-    public static StartPage creditPayButtonClick() {    //купить в кредит
-        StartPage creditPage = page(StartPage.class);
-        creditPage.creditButton.click();
-        return creditPage;
+    public void creditPayButtonClick() {    //купить в кредит
+        creditButton.click();
     }
 
     public void checkNotificationApprovedVisible() {    //плашка ОК
@@ -59,6 +55,7 @@ public class StartPage {
     public void checkNotificationDeclinedVisible() {    //плашка Отказ
         notificationDeclined.shouldBe(visible, Duration.ofMillis(15000));
     }
+
     public void cardNumberFieldSubMessage(String subMessage) {  //ошибка номер карты
         cardNumberField.$(".input__sub").shouldHave(visible, exactText(subMessage));
     }
